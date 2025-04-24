@@ -15,6 +15,7 @@ import EditProfile from "./Mall/EditProfile"
 import NewQnA from "./Mall/NewQnA";
 import AddPost from "./Mall/AddPost";
 
+
 function App() {
   return (
     <CartProvider>

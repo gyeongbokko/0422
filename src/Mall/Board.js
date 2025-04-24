@@ -1,7 +1,6 @@
-// Board.js
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import "../App.css"
 
@@ -11,6 +10,7 @@ function Board() {
   const [selectedPost, setSelectedPost] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortOption, setSortOption] = useState("latest")
+  const [categoryFilter, setCategoryFilter] = useState("전체")
   const [currentPage, setCurrentPage] = useState(1)
   const postsPerPage = 5
   const [currentUser, setCurrentUser] = useState(null)
@@ -25,17 +25,7 @@ function Board() {
 
   useEffect(() => {
     const storedPosts = JSON.parse(localStorage.getItem("boardPosts") || "[]")
-    if (storedPosts.length > 0) {
-      setPosts(storedPosts)
-    } else {
-      fetch("/board.json")
-        .then((response) => response.json())
-        .then((data) => {
-          setPosts(data)
-          localStorage.setItem("boardPosts", JSON.stringify(data))
-        })
-        .catch((error) => console.error("Error loading posts:", error))
-    }
+    setPosts(storedPosts)
 
     const user = JSON.parse(localStorage.getItem("currentUser"))
     if (user) {
@@ -71,20 +61,20 @@ function Board() {
     setReplyContent("")
   }
 
-  const handleDelete = (postId) => {
-    if (!window.confirm("정말 삭제하시겠습니까?")) return;
-    const updatedPosts = posts.filter(post => post.id !== postId);
-    setPosts(updatedPosts);
-    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts));
-    setSelectedPost(null);
+  const handleEdit = (post) => {
+    navigate("/AddPost", { state: { postToEdit: post } })
   }
 
-  const handleEdit = (post) => {
-    navigate("/AddPost", { state: { postToEdit: post } });
+  const handleDelete = (postId) => {
+    if (!window.confirm("정말 삭제하시겠습니까?")) return
+    const updatedPosts = posts.filter((post) => post.id !== postId)
+    setPosts(updatedPosts)
+    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts))
+    setSelectedPost(null)
   }
 
   const addComment = () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) return
     const updatedPosts = posts.map(post => {
       if (post.id === selectedPost.id) {
         const newCommentObj = {
@@ -93,22 +83,22 @@ function Board() {
           authorName: currentUser.name,
           content: newComment,
           replies: []
-        };
+        }
         return {
           ...post,
           comments: post.comments ? [...post.comments, newCommentObj] : [newCommentObj]
-        };
+        }
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts));
-    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id));
-    setNewComment("");
-  };
+      return post
+    })
+    setPosts(updatedPosts)
+    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts))
+    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id))
+    setNewComment("")
+  }
 
   const addReply = (commentId) => {
-    if (!replyContent.trim()) return;
+    if (!replyContent.trim()) return
     const updatedPosts = posts.map(post => {
       if (post.id === selectedPost.id) {
         const updatedComments = post.comments.map(comment => {
@@ -118,63 +108,66 @@ function Board() {
               userId: currentUser.id,
               authorName: currentUser.name,
               content: replyContent
-            };
+            }
             return {
               ...comment,
               replies: comment.replies ? [...comment.replies, newReply] : [newReply]
-            };
+            }
           }
-          return comment;
-        });
-        return { ...post, comments: updatedComments };
+          return comment
+        })
+        return { ...post, comments: updatedComments }
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts));
-    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id));
-    setReplyingTo(null);
-    setReplyContent("");
-  };
+      return post
+    })
+    setPosts(updatedPosts)
+    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts))
+    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id))
+    setReplyingTo(null)
+    setReplyContent("")
+  }
 
   const editComment = (commentId) => {
     const updatedPosts = posts.map(post => {
       if (post.id === selectedPost.id) {
         const updatedComments = post.comments.map(comment =>
           comment.id === commentId ? { ...comment, content: editingCommentContent } : comment
-        );
-        return { ...post, comments: updatedComments };
+        )
+        return { ...post, comments: updatedComments }
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts));
-    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id));
-    setEditingCommentId(null);
-    setEditingCommentContent("");
-  };
+      return post
+    })
+    setPosts(updatedPosts)
+    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts))
+    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id))
+    setEditingCommentId(null)
+    setEditingCommentContent("")
+  }
 
   const deleteComment = (commentId) => {
     const updatedPosts = posts.map(post => {
       if (post.id === selectedPost.id) {
-        const updatedComments = post.comments.filter(comment => comment.id !== commentId);
-        return { ...post, comments: updatedComments };
+        const updatedComments = post.comments.filter(comment => comment.id !== commentId)
+        return { ...post, comments: updatedComments }
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts));
-    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id));
-  };
+      return post
+    })
+    setPosts(updatedPosts)
+    localStorage.setItem("boardPosts", JSON.stringify(updatedPosts))
+    setSelectedPost(updatedPosts.find(p => p.id === selectedPost.id))
+  }
 
   const filteredPosts = posts.filter((post) => {
-    const titleMatch = post.title?.toLowerCase().includes(searchQuery.toLowerCase())
-    const authorMatch = post.authorName?.toLowerCase().includes(searchQuery.toLowerCase())
-    const contentMatch =
-      typeof post.content === "string" &&
-      post.content.toLowerCase().includes(searchQuery.toLowerCase())
-    return titleMatch || authorMatch || contentMatch
+    const lowerQuery = searchQuery.toLowerCase()
+    const titleMatch = post.title?.toLowerCase().includes(lowerQuery)
+    const authorMatch = post.authorName?.toLowerCase().includes(lowerQuery)
+    const contentMatch = typeof post.content === "string" && post.content.toLowerCase().includes(lowerQuery)
+    const categoryMatch = categoryFilter === "전체" || post.category === categoryFilter
+    const tagMatch = post.tags?.some(tag => `#${tag.toLowerCase()}`.includes(lowerQuery))
+  
+    return (titleMatch || authorMatch || contentMatch || tagMatch) && categoryMatch
   })
+  
 
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     if (sortOption === "latest") {
@@ -193,6 +186,20 @@ function Board() {
   return (
     <div className="board-container">
       <h2>자유 게시판</h2>
+
+      <div className="category-tabs" style={{ marginBottom: "15px" }}>
+        {["전체", "공지", "자유", "질문", "정보", "이벤트"].map((cat) => (
+          <button
+            key={cat}
+            className={categoryFilter === cat ? "active-category" : ""}
+            onClick={() => setCategoryFilter(cat)}
+            style={{ marginRight: "8px", padding: "6px 12px", borderRadius: "6px" }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
       <div className="board-actions">
         <button onClick={handleAddPost}>새 게시물 작성</button>
         <input
@@ -210,6 +217,46 @@ function Board() {
           <option value="latest">최신순</option>
           <option value="views">조회수순</option>
         </select>
+      </div>
+
+      <div className="posts-table" style={{ marginTop: "20px" }}>
+        <table>
+          <thead>
+            <tr>
+              <th>카테고리</th>
+              <th>작성자 ID</th>
+              <th>제목</th>
+              <th>작성자 이름</th>
+              <th>작성일</th>
+              <th>조회수</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentPosts.map((post) => (
+              <tr key={post.id} onClick={() => viewPostDetails(post)} className="post-row">
+                <td>{post.category}</td>
+                <td>{post.userId}</td>
+                <td>{post.title}</td>
+                <td>{post.authorName}</td>
+                <td>{post.date}</td>
+                <td>{post.views}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="pagination" style={{ marginTop: "20px" }}>
+        {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNum) => (
+          <button
+            key={pageNum}
+            onClick={() => setCurrentPage(pageNum)}
+            className={currentPage === pageNum ? "active-page" : ""}
+            style={{ marginRight: "6px", padding: "4px 10px" }}
+          >
+            {pageNum}
+          </button>
+        ))}
       </div>
 
       {selectedPost && (
@@ -246,120 +293,110 @@ function Board() {
                   </a>
                 </div>
               )}
-            </div>
-
-            {/* 댓글 영역 */}
-            <div style={{ marginTop: "30px" }}>
-              <h4>댓글</h4>
-              {selectedPost.comments?.map((comment) => (
-                <div key={comment.id} style={{ marginBottom: "10px", paddingLeft: "10px", borderLeft: "2px solid #ddd" }}>
-                  <strong>{comment.authorName}</strong>: {
-                    editingCommentId === comment.id ? (
-                      <>
-                        <input
-                          value={editingCommentContent}
-                          onChange={(e) => setEditingCommentContent(e.target.value)}
-                        />
-                        <button onClick={() => editComment(comment.id)}>저장</button>
-                        <button onClick={() => setEditingCommentId(null)}>취소</button>
-                      </>
-                    ) : (
-                      <>
-                        {comment.content}
-                        {currentUser && comment.userId === currentUser.id && (
-                          <>
-                            <button onClick={() => {
-                              setEditingCommentId(comment.id);
-                              setEditingCommentContent(comment.content);
-                            }}>수정</button>
-                            <button onClick={() => deleteComment(comment.id)}>삭제</button>
-                          </>
-                        )}
-                        <button onClick={() => setReplyingTo(comment.id)}>답글</button>
-                      </>
-                    )
-                  }
-                  {replyingTo === comment.id && (
-                    <div style={{ marginTop: "5px", marginLeft: "20px" }}>
-                      <input
-                        type="text"
-                        placeholder="답글을 입력하세요"
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        style={{ width: "70%", marginRight: "10px" }}
-                      />
-                      <button onClick={() => addReply(comment.id)}>등록</button>
-                      <button onClick={() => setReplyingTo(null)}>취소</button>
-                    </div>
-                  )}
-                  {comment.replies?.map((reply) => (
-                    <div key={reply.id} style={{ marginLeft: "20px", marginTop: "5px" }}>
-                      <strong>{reply.authorName}</strong>: {reply.content}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              {isLoggedIn && (
+              {selectedPost.tags && selectedPost.tags.length > 0 && (
                 <div style={{ marginTop: "10px" }}>
-                  <input
-                    type="text"
-                    placeholder="댓글을 입력하세요"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    style={{ width: "70%", marginRight: "10px" }}
-                  />
-                  <button onClick={addComment}>댓글 작성</button>
+                  <strong>태그:</strong>
+                  <div style={{ marginTop: "5px" }}>
+                    {selectedPost.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          display: "inline-block",
+                          backgroundColor: "#f0f0f0",
+                          padding: "4px 8px",
+                          marginRight: "6px",
+                          borderRadius: "5px",
+                          fontSize: "14px"
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
 
+              {/* 댓글 */}
+              <div style={{ marginTop: "30px" }}>
+                <h4>댓글</h4>
+                {selectedPost.comments?.map((comment) => (
+                  <div key={comment.id} style={{ marginBottom: "10px", paddingLeft: "10px", borderLeft: "2px solid #ddd" }}>
+                    <strong>{comment.authorName}</strong>: {
+                      editingCommentId === comment.id ? (
+                        <>
+                          <input
+                            value={editingCommentContent}
+                            onChange={(e) => setEditingCommentContent(e.target.value)}
+                          />
+                          <button onClick={() => editComment(comment.id)}>저장</button>
+                          <button onClick={() => setEditingCommentId(null)}>취소</button>
+                        </>
+                      ) : (
+                        <>
+                          {comment.content}
+                          {currentUser && comment.userId === currentUser.id && (
+                            <>
+                              <button onClick={() => {
+                                setEditingCommentId(comment.id);
+                                setEditingCommentContent(comment.content);
+                              }}>수정</button>
+                              <button onClick={() => deleteComment(comment.id)}>삭제</button>
+                            </>
+                          )}
+                          <button onClick={() => setReplyingTo(comment.id)}>답글</button>
+                        </>
+                      )
+                    }
+                    {replyingTo === comment.id && (
+                      <div style={{ marginTop: "5px", marginLeft: "20px" }}>
+                        <input
+                          type="text"
+                          placeholder="답글을 입력하세요"
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          style={{ width: "70%", marginRight: "10px" }}
+                        />
+                        <button onClick={() => addReply(comment.id)}>등록</button>
+                        <button onClick={() => setReplyingTo(null)}>취소</button>
+                      </div>
+                    )}
+                    {comment.replies?.map((reply) => (
+                      <div key={reply.id} style={{ marginLeft: "20px", marginTop: "5px" }}>
+                        <strong>{reply.authorName}</strong>: {reply.content}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {isLoggedIn && (
+                  <div style={{ marginTop: "10px" }}>
+                    <input
+                      type="text"
+                      placeholder="댓글을 입력하세요"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      style={{ width: "70%", marginRight: "10px" }}
+                    />
+                    <button onClick={addComment}>댓글 작성</button>
+                  </div>
+                )}
+              </div>
+            </div>
             {currentUser && selectedPost.userId === currentUser.id && (
               <div style={{ marginTop: "15px" }}>
-                <button onClick={() => handleEdit(selectedPost)} style={{ marginRight: "10px" }}>수정</button>
-                <button onClick={() => handleDelete(selectedPost.id)}>삭제</button>
+                <button onClick={() => handleEdit(selectedPost)} style={{ marginRight: "10px" }}>
+                  수정
+                </button>
+                <button onClick={() => handleDelete(selectedPost.id)}>
+                  삭제
+                </button>
               </div>
             )}
-            <button onClick={closePostDetails} style={{ marginTop: "15px" }}>닫기</button>
+            <div style={{ marginTop: "15px" }}>
+              <button onClick={closePostDetails}>닫기</button>
+            </div>
           </div>
         </div>
       )}
-
-      <div className="posts-table">
-        <table>
-          <thead>
-            <tr>
-              <th>작성자 ID</th>
-              <th>제목</th>
-              <th>작성자 이름</th>
-              <th>작성일</th>
-              <th>조회수</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentPosts.map((post) => (
-              <tr key={post.id} onClick={() => viewPostDetails(post)} className="post-row">
-                <td>{post.userId}</td>
-                <td>{post.title}</td>
-                <td>{post.authorName}</td>
-                <td>{post.date}</td>
-                <td>{post.views}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="pagination">
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNum) => (
-          <button
-            key={pageNum}
-            onClick={() => setCurrentPage(pageNum)}
-            className={currentPage === pageNum ? "active-page" : ""}
-          >
-            {pageNum}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }
